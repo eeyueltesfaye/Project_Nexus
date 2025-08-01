@@ -1,11 +1,12 @@
 from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
-from .serializers import RegisterSerializer, LoginSerializer
+from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from django.http import FileResponse, Http404
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -26,7 +27,8 @@ class RegisterView(generics.CreateAPIView):
         return Response({
             "user": {
                 "email": user.email,
-                "full_name": user.full_name,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
                 "role": user.role,
             },
             "token": token
@@ -44,7 +46,8 @@ class LoginView(generics.GenericAPIView):
         return Response({
             "user": {
                 "email": user.email,
-                "full_name": user.full_name,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
                 "role": user.role,
             },
             "token": token
@@ -62,3 +65,34 @@ class LogoutView(APIView):
             return Response({"message": "Logout successful"}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class ProfileStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        completed = request.user.profile.profile_completed
+        return Response({'profile_completed': completed})
+    
+
+class ProfileUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
+
+    def perform_update(self, serializer):
+        profile = serializer.save()
+        profile.check_completion()
+
+
+class ResumeDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = request.user.profile
+        if not profile.resume:
+            raise Http404("Resume not found.")
+        return FileResponse(profile.resume.open(), as_attachment=True, filename="resume.pdf")

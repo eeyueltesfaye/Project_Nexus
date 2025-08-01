@@ -1,18 +1,20 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser, Profile
 from django.contrib.auth import authenticate
+import os
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'full_name', 'password', 'role']
+        fields = ['email', 'first_name', 'last_name', 'password', 'role']
 
     def create(self, validated_data):
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
-            full_name=validated_data['full_name'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
             password=validated_data['password'],
             role=validated_data.get('role', CustomUser.Roles.JOB_SEEKER)
         )
@@ -28,3 +30,43 @@ class LoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Invalid credentials")
+
+class ProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', required=False)
+    last_name = serializers.CharField(source='user.last_name', required=False)
+    class Meta:
+        model = Profile
+        exclude = ['user']  # Hide the user field
+        read_only_fields = ['profile_completed']  # Prevent manual changes
+
+    def validate_resume(self, value):
+        if value.size > 2 * 1024 * 1024:  # 2 MB limit
+            raise serializers.ValidationError("Resume file too large (max 2MB).")
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in ['.pdf', '.doc', '.docx']:
+            raise serializers.ValidationError("Unsupported file type. Use PDF or DOC.")
+        return value
+
+    def validate_profile_picture(self, value):
+        if value.size > 2 * 1024 * 1024:  # 2 MB limit
+            raise serializers.ValidationError("Image too large (max 2MB).")
+        return value
+
+    def update(self, instance, validated_data):
+        # Extract user fields
+        user_data = validated_data.pop('user', {})
+        user = instance.user
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        user.save()
+
+        # Update profile fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.profile_completed = all(
+            getattr(instance, field) for field in ['country', 'phone_number', 'gender']
+        )
+        instance.save()
+
+        return instance
