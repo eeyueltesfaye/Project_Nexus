@@ -34,7 +34,6 @@ class RegisterView(generics.CreateAPIView):
             "token": token
         }, status=status.HTTP_201_CREATED)
 
-
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
 
@@ -43,16 +42,29 @@ class LoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data
         token = get_tokens_for_user(user)
+
+            # Default redirect
+        redirect_url = '/api/jobs/'
+
+        # Skip redirect logic for superusers
+        if user.is_superuser:
+            redirect_url = '/admin/' 
+
+        # Handle incomplete profile (only for non-superusers)
+        elif hasattr(user, 'profile') and not user.profile.profile_completed:
+            redirect_url = '/api/profile/update/'
+
         return Response({
             "user": {
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "role": user.role,
+                "profile_completed": user.profile.profile_completed if hasattr(user, 'profile') else False,
             },
-            "token": token
+            "token": token,
+            "redirect": redirect_url
         }, status=status.HTTP_200_OK)
-
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
