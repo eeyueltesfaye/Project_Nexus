@@ -57,3 +57,20 @@ class Profile(models.Model):
         required_fields = [self.phone_number, self.country, self.gender]
         self.profile_completed = all(required_fields)
         self.save()
+
+
+class RoleRequest(models.Model):
+    ROLE_CHOICES = [
+        ('RECRUITER', 'Recruiter'),
+        ('ADMIN', 'Admin'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    requested_role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    reason = models.TextField(blank=True)
+    approved = models.BooleanField(default=False)
+    reviewed = models.BooleanField(default=False)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.email} requests {self.requested_role}"

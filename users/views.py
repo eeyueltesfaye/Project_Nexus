@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser
+from .models import CustomUser, RoleRequest
 from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -96,3 +96,24 @@ class ResumeDownloadView(APIView):
         if not profile.resume:
             raise Http404("Resume not found.")
         return FileResponse(profile.resume.open(), as_attachment=True, filename="resume.pdf")
+    
+
+
+class RoleRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'JOB_SEEKER':
+            return Response({'detail': 'Only job seekers can request role changes.'}, status=400)
+
+        if RoleRequest.objects.filter(user=request.user, reviewed=False).exists():
+            return Response({'detail': 'You already have a pending request.'}, status=400)
+
+        requested_role = request.data.get('requested_role')
+        reason = request.data.get('reason', '')
+
+        if requested_role not in ['RECRUITER', 'ADMIN']:
+            return Response({'detail': 'Invalid role requested.'}, status=400)
+
+        RoleRequest.objects.create(user=request.user, requested_role=requested_role, reason=reason)
+        return Response({'detail': 'Role request submitted successfully.'}, status=201)

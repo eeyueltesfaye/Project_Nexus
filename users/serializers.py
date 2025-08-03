@@ -2,15 +2,42 @@ from rest_framework import serializers
 from .models import CustomUser, Profile
 from django.contrib.auth import authenticate
 import os
+from rest_framework.validators import UniqueValidator
+from django.contrib.auth.password_validation import validate_password
+
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
+    )
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'}
+    )
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'first_name', 'last_name', 'password', 'role']
+        fields = ['email', 'first_name', 'last_name', 'password', 'confirm_password']
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"password": "Passwords do not match."})
+        return attrs
 
     def create(self, validated_data):
+        validated_data.pop('confirm_password')
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
@@ -36,8 +63,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name', required=False)
     class Meta:
         model = Profile
-        exclude = ['user']  # Hide the user field
-        read_only_fields = ['profile_completed']  # Prevent manual changes
+        fields = '__all__'
+        read_only_fields = ['user', 'profile_completed'] # Prevent manual changes
 
     def validate_resume(self, value):
         if value.size > 2 * 1024 * 1024:  # 2 MB limit
