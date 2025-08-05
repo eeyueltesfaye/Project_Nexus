@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from .managers import UserManager
 from django.conf import settings
+from django_countries.fields import CountryField
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class Roles(models.TextChoices):
@@ -48,14 +49,14 @@ class Profile(models.Model):
     bio = models.TextField(blank=True)
     resume = models.FileField(upload_to=user_directory_path, blank=True, null=True)
     linkedin = models.URLField(blank=True)
-    country = models.CharField(max_length=100, blank=True)
+    country = CountryField(blank_label="(Select your country)", blank=True)
     skills = models.TextField(blank=True)  # or ManyToMany to a Skill model
     portfolio = models.URLField(blank=True)
     profile_completed = models.BooleanField(default=False)
 
     def check_completion(self):
         required_fields = [self.phone_number, self.country, self.gender]
-        self.profile_completed = all(required_fields)
+        self.profile_completed = all(bool(str(field).strip()) for field in required_fields)
         self.save()
 
 

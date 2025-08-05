@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 import os
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from django_countries.serializer_fields import CountryField
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -61,6 +62,7 @@ class LoginSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', required=False)
     last_name = serializers.CharField(source='user.last_name', required=False)
+    country = CountryField()
     class Meta:
         model = Profile
         fields = '__all__'
