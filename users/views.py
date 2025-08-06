@@ -3,7 +3,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser, RoleRequest
-from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer
+from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer, RoleRequestSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.http import FileResponse, Http404
@@ -52,7 +52,7 @@ class LoginView(generics.GenericAPIView):
 
         # Handle incomplete profile (only for non-superusers)
         elif hasattr(user, 'profile') and not user.profile.profile_completed:
-            redirect_url = '/api/profile/update/'
+            redirect_url = '/api/users/profile/update/'
 
         return Response({
             "user": {
@@ -84,8 +84,9 @@ class ProfileStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        completed = request.user.profile.profile_completed
-        return Response({'profile_completed': completed})
+        profile = request.user.profile
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
     
 
 class ProfileUpdateView(generics.RetrieveUpdateAPIView):
@@ -121,11 +122,12 @@ class RoleRequestView(APIView):
         if RoleRequest.objects.filter(user=request.user, reviewed=False).exists():
             return Response({'detail': 'You already have a pending request.'}, status=400)
 
-        requested_role = request.data.get('requested_role')
-        reason = request.data.get('reason', '')
+        serializer = RoleRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if requested_role not in ['RECRUITER', 'ADMIN']:
-            return Response({'detail': 'Invalid role requested.'}, status=400)
-
-        RoleRequest.objects.create(user=request.user, requested_role=requested_role, reason=reason)
+        RoleRequest.objects.create(
+            user=request.user,
+            requested_role=serializer.validated_data['requested_role'],
+            reason=serializer.validated_data['reason']
+        )
         return Response({'detail': 'Role request submitted successfully.'}, status=201)

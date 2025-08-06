@@ -20,9 +20,9 @@ class JobApplicationInline(admin.TabularInline):
 
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name']
-    search_fields = ['name']
-    ordering = ['name']
+    list_display = ['id', 'category_name']
+    search_fields = ['category_name']
+    ordering = ['category_name']
 
 
 @admin.register(Job)

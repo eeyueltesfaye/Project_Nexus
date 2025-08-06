@@ -6,10 +6,10 @@ from django.conf import settings
 User = get_user_model()
 
 class JobCategory(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    category_name = models.CharField(max_length=100, unique=True)
     
     def __str__(self):
-        return self.name
+        return self.category_name
     
 class Job(models.Model):
     STATUS_CHOICES = [
@@ -65,7 +65,7 @@ class JobApplication(models.Model):
         unique_together = ('job', 'applicant')
 
     def __str__(self):
-        return f"{self.applicant.username} applied to {self.job.title}"
+        return f"{self.applicant.first_name} applied to {self.job.title}"
 
 
 class SavedJob(models.Model):

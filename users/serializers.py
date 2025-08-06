@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Profile
+from .models import CustomUser, Profile,  RoleRequest
 from django.contrib.auth import authenticate
 import os
 from rest_framework.validators import UniqueValidator
@@ -99,3 +99,23 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class RoleRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleRequest
+        fields = ['requested_role', 'reason']
+        extra_kwargs = {
+            'requested_role': {'required': True},
+            'reason': {'required': True}
+        }
+
+    def validate_requested_role(self, value):
+        if value not in ['RECRUITER', 'ADMIN']:
+            raise serializers.ValidationError("Invalid role requested.")
+        return value
+
+    def validate_reason(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Reason cannot be empty.")
+        return value

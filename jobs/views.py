@@ -10,12 +10,28 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
 from . import serializers
+from rest_framework.exceptions import ValidationError
+from django_filters import rest_framework as filters
+
+
 
 # Admin & Recruiter can create jobs
 class JobCreateView(generics.CreateAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
     permission_classes = [IsAuthenticated, IsAdmin | IsRecruiter]
+
+    def perform_create(self, serializer):
+        serializer.save(posted_by=self.request.user)
+
+class JobFilter(filters.FilterSet):
+    category = filters.CharFilter(field_name='category__category_name', lookup_expr='icontains')
+    location = filters.CharFilter(lookup_expr='icontains')
+    job_type = filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = Job
+        fields = ['category', 'location', 'job_type']
 
 
 # Anyone authenticated can view jobs
@@ -25,7 +41,7 @@ class JobListView(generics.ListAPIView):
     serializer_class = JobSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['location', 'category', 'job_type']  # for dropdowns/facets
+    filterset_class = JobFilter
     search_fields = ['title', 'description','industry', 'company_name'] #for full-text search
     ordering_fields = ['-posted_at', 'title']
 
@@ -99,8 +115,8 @@ class SavedJobCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         try:
             return super().create(request, *args, **kwargs)
-        except serializers.ValidationError as e:
-            return Response({'detail': str(e.detail[0])}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'detail': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -154,11 +170,25 @@ class JobCategoryCreateView(generics.CreateAPIView):
     serializer_class = JobCategorySerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        return Response({
+            "message": "Job category created successfully.",
+            "data": response.data
+        }, status=status.HTTP_201_CREATED)
+
 # Anyone can list categories
 class JobCategoryListView(generics.ListAPIView):
     queryset = JobCategory.objects.all()
     serializer_class = JobCategorySerializer
     permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return Response({
+            "message": "Job categories retrieved successfully.",
+            "data": response.data
+        }, status=status.HTTP_200_OK)
 
 # Admins can update categories
 class JobCategoryUpdateView(generics.UpdateAPIView):
@@ -166,8 +196,22 @@ class JobCategoryUpdateView(generics.UpdateAPIView):
     serializer_class = JobCategorySerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        return Response({
+            "message": "Job category updated successfully.",
+            "data": response.data
+        }, status=status.HTTP_200_OK)
+
 # Admins can delete categories
 class JobCategoryDeleteView(generics.DestroyAPIView):
     queryset = JobCategory.objects.all()
     serializer_class = JobCategorySerializer
     permission_classes = [IsAuthenticated, IsAdmin]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            "message": "Job category deleted successfully."
+        }, status=status.HTTP_200_OK)
