@@ -25,6 +25,8 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         token = get_tokens_for_user(user)
         return Response({
+            "message": "Registration successful. Please login.",
+            "redirect": "/api/users/login/",
             "user": {
                 "email": user.email,
                 "first_name": user.first_name,
