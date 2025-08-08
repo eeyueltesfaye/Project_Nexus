@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
     'django_countries',
-    'core',
 ]
 
 MIDDLEWARE = [
@@ -89,7 +88,7 @@ ROOT_URLCONF = 'job_board.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -148,7 +147,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] 
 
 # This production code might break development mode, so we check whether we're in DEBUG mode
 if not DEBUG:
@@ -165,7 +163,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5145",
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://alx-project-nexus-chi.vercel.app"
+    "https://alx-project-nexus-chi.vercel.app",
+
 ]  
 
 # Default primary key field type
