@@ -22,6 +22,7 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from core.views import landing_page
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -36,6 +37,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('', landing_page),
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
     path('api/', include('jobs.urls')),
