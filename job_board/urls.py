@@ -22,6 +22,7 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from django.http import HttpResponse
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -35,8 +36,12 @@ schema_view = get_schema_view(
    permission_classes=(permissions.AllowAny,),
 )
 
+def landing_page(request):
+    return HttpResponse("<h1>Welcome to the Job Board Platform</h1><p>This is the backend for the Job Board platform.</p>")
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', landing_page, name='landing'),
     path('api/users/', include('users.urls')),
     path('api/', include('jobs.urls')),
      # Swagger and Redoc endpoints
