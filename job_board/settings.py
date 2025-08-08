@@ -81,15 +81,6 @@ MIDDLEWARE = [
     'users.middleware.EnforceProfileCompletionMiddleware', 
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True   # not recommended for production
-
-# for poduction 
-# CORS_ALLOW_ALL_ORIGINS = False
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "https://your-frontend.com",
-# ]
-
 
 
 ROOT_URLCONF = 'job_board.urls'
@@ -165,6 +156,16 @@ if not DEBUG:
     # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
     # and renames the files with unique names for each version to support long-term caching
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5143",
+    "http://localhost:5145",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://alx-project-nexus-chi.vercel.app",
+
+]  
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
