@@ -152,4 +152,4 @@ Feel free to use and modify with attribution.
 **Eyuel Tesfaye**  
 Backend Developer | DevOps Intern  
 📍 Addis Ababa, Ethiopia  
-GitHub: [@eyueltesfaye](https://github.com/eeyueltesfaye)
+GitHub: [@eeyueltesfaye](https://github.com/eeyueltesfaye)
