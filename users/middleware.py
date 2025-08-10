@@ -19,7 +19,7 @@ class EnforceProfileCompletionMiddleware:
                 restricted_prefixes = [
                     '/api/jobs/',
                     '/api/saved-jobs/',
-                    '/api/request-role/',
+                    '/api/users/request-role/',
                     '/api/profile/resume/',
                 ]
                 if request.path not in exempt_paths and any(request.path.startswith(p) for p in restricted_prefixes):
